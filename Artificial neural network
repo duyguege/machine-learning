@@ -1,0 +1,103 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Sun Aug  6 15:32:21 2023
+
+@author: User
+"""
+
+import pandas as pd
+import numpy as np
+from sklearn.neural_network import MLPRegressor
+from sklearn.model_selection import train_test_split, cross_val_score, cross_val_predict
+from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.model_selection import GridSearchCV
+from matplotlib import pyplot
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.metrics import mean_absolute_error
+df_=pd.read_csv("C:\\Users\\User\\Desktop\\dataset2.csv")
+df=df_.copy()
+df.head()
+X = df.drop('tensile_strength', axis=1)
+y = df['tensile_strength']
+df.head()
+X_train,X_test,y_train,y_test=train_test_split(X,y,test_size=0.2,random_state=42)
+X_train.shape
+mlp_model=MLPRegressor().fit(X_train,y_train)
+mlp_model.activation
+print(mlp_model.activation)
+y_pred=mlp_model.predict(X_train)
+r2 = r2_score(y_train, y_pred)
+print("r2train :" + str(r2))
+
+y_pred=mlp_model.predict(X_test)
+mlp_model = MLPRegressor()
+mlp_params= {"alpha":(0.1, 0.01, 0.02, 0.005),
+           "hidden_layer_sizes":[(20,20), (100,50,150),(300,200,150)],
+          "activation":["relu", "logistic"] }
+"""   mlp_CV_model= GridSearchCV(mlp_model, 
+                          mlp_params, 
+                          cv = 10)   
+mlp_CV_model.fit(X_train, y_train)
+best_params = mlp_CV_model.best_params_  
+print(best_params) """
+my_params={"alpha" : 0.005,
+           "hidden_layer_sizes" : (100,50,150),
+           "activation" : "relu"
+           }
+mlp_tuned = MLPRegressor(**my_params, random_state=42,max_iter=10000) 
+mlp_tuned = mlp_tuned.fit(X_train, y_train)
+
+y_pred = mlp_tuned.predict(X_test)
+R2 = r2_score(y_test, y_pred)
+rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+mae = mean_absolute_error(y_test, y_pred)
+print("maetest", mae)
+print("rmsetest :" + str(rmse))
+sns.regplot(x=y_test, y=y_pred, color='b', label=f" RMSE:{rmse:.2f}, R2: {R2:.2f}")
+plt.xlabel('Test Values of T.S. MPa')
+plt.ylabel('Predicted Values of T.S. MPa')
+plt.legend()
+plt.show()
+
+y_predict = mlp_tuned.predict(X_train)
+r2 = r2_score(y_train, y_predict)
+rmse = np.sqrt(mean_squared_error(y_train, y_predict))
+mae = mean_absolute_error(y_train, y_predict)
+print("maetrain", mae)
+print("rmsetrain :" + str(rmse))
+sns.regplot(x=y_train, y=y_predict, color='b', label=f"  RMSE: {rmse:.2f}, R2: {r2:.2f}")
+plt.xlabel('Train Values of T.S. MPa')
+plt.ylabel('Predicted Values of T.S. MPa')
+plt.legend()
+plt.show()
+
+a = [210, 60, 0.3, 50]
+a = np.array(a) 
+a = np.expand_dims(a, 0) 
+print("pred mlp değeri:", mlp_tuned.predict(a))
+
+
+y_pred_train = mlp_tuned.predict(X_train)
+y_pred_test = mlp_tuned.predict(X_test)
+
+
+r2_train = r2_score(y_train, y_pred_train)
+r2_test = r2_score(y_test, y_pred_test)
+print("r2_trainmlp :" + str(r2_train))
+print("r2_testmlp :" + str(r2_test))
+
+
+plt.title('Neural network')
+plt.xlabel('True Values')
+plt.ylabel('Prediction')
+
+
+df = pd.DataFrame({"True values": y_test, "Prediction": y_pred_test}, index=X_test.index)
+df.sort_index(inplace=True)
+plt.scatter(df.index, df["True values"], marker="o", label="Test values")
+plt.plot(df.index, df["Prediction"], color="r", label="Prediction")
+plt.xlabel("Index")
+plt.ylabel("Values")
+plt.legend()
+plt.show()
